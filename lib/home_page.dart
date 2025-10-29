@@ -210,22 +210,31 @@ class _HomePageState extends State<HomePage>
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   final TextEditingController _passengerController = TextEditingController();
+  String? selectedBookingType;
+  String? selectedRentalHours;
 
+
+
+  final List<String> bookingTypes = [
+    'Ride Now',
+    'Schedule Later',
+    'Rental',
+    'Outstation'
+  ];
 
 
   final List<String> carTypes = [
-    'SUV',
-    'Sedan',
-    'Hatchback',
-    'Coupe',
-    'Convertible',
-    'Wagon',
-    'Pickup Truck',
-    'Van',
-    'Minivan',
-    'Crossover'
+    'SUV (5-7 seats)',
+    'Sedan (5 seats)',
+    'Hatchback (4-5 seats)',
+    'Coupe (2-4 seats)',
+    'Convertible (2-4 seats)',
+    'Wagon (5-7 seats)',
+    'Pickup Truck (2-6 seats)',
+    'Van (7-15 seats)',
+    'Minivan (7-8 seats)',
+    'Crossover (5-7 seats)'
   ];
-
 
   String? selectedCarType;
 
@@ -779,10 +788,9 @@ class _HomePageState extends State<HomePage>
                     // Booking Card
                     if (_showBookingCard && !_cabBooked)
 
-
                       Container(
                         decoration: BoxDecoration(
-                          color:  Color(0xFF3c3c3c),
+                          color: Color(0xFF3c3c3c),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -837,88 +845,7 @@ class _HomePageState extends State<HomePage>
                             ),
                             SizedBox(height: 16),
 
-                            // Date Picker Field
-                            InkWell(
-                              onTap: () async {
-                                final DateTime? picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: _selectedDate ?? DateTime.now(),
-                                  firstDate: DateTime.now(),
-                                  lastDate: DateTime.now().add(Duration(days: 365)),
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    _selectedDate = picked;
-                                  });
-                                }
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.calendar_today, color: Color(0xFFF79D39), size: 20),
-                                    SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        _selectedDate == null
-                                            ? 'Select Date'
-                                            : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: _selectedDate == null ? Colors.grey : Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 12),
-
-                            // Time Picker Field
-                            InkWell(
-                              onTap: () async {
-                                final TimeOfDay? picked = await showTimePicker(
-                                  context: context,
-                                  initialTime: _selectedTime ?? TimeOfDay.now(),
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    _selectedTime = picked;
-                                  });
-                                }
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
-                                    SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        _selectedTime == null
-                                            ? 'Select Time'
-                                            : _selectedTime!.format(context),
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: _selectedTime == null ? Colors.grey : Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 12),
-//car type
+                            // Ride Type Selection
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                               decoration: BoxDecoration(
@@ -929,51 +856,459 @@ class _HomePageState extends State<HomePage>
                                 children: [
                                   Expanded(
                                     child: _buildDropdownField(
-                                      label: 'Car Type',
-                                      value: selectedCarType,
-                                      items: carTypes,
-                                      icon: Icons.car_rental,
-                                      hint: 'Select car type',
+                                      label: 'Ride Type',
+                                      value: selectedBookingType,
+                                      items: bookingTypes,
+                                      icon: Icons.local_taxi,
+                                      hint: 'Select ride type',
                                       onChanged: (value) {
                                         setState(() {
-                                          selectedCarType = value;
+                                          selectedBookingType = value;
+                                          // Reset fields when switching ride types
+                                          _selectedDate = null;
+                                          _selectedTime = null;
+                                          selectedRentalHours = null;
                                         });
                                       },
                                     ),
                                   ),
                                 ],
                               ),
-
                             ),
+                            SizedBox(height: 12),
 
-                            // Passenger Count Field
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
-                                  SizedBox(width: 12),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _passengerController,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'Number of Passengers',
-                                        hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-                                        border: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.zero,
+                            // Fields for "Ride Now"
+                            if (selectedBookingType == 'Ride Now') ...[
+                              // Car Type
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildDropdownField(
+                                        label: 'Car Type',
+                                        value: selectedCarType,
+                                        items: carTypes,
+                                        icon: Icons.car_rental,
+                                        hint: 'Select car type',
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedCarType = value;
+                                          });
+                                        },
                                       ),
-                                      style: TextStyle(fontSize: 14, color: Colors.black87),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
+                              SizedBox(height: 12),
+
+                              // Passenger Count Field
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _passengerController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Number of Passengers',
+                                          hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                        style: TextStyle(fontSize: 14, color: Colors.white70),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
+                            // Fields for "Schedule Later"
+                            if (selectedBookingType == 'Schedule Later') ...[
+                              // Date Picker Field
+                              InkWell(
+                                onTap: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _selectedDate ?? DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(Duration(days: 365)),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _selectedDate = picked;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.calendar_today, color: Color(0xFFF79D39), size: 20),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedDate == null
+                                              ? 'Select Date'
+                                              : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: _selectedDate == null ? Colors.grey : Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 12),
+
+                              // Time Picker Field
+                              InkWell(
+                                onTap: () async {
+                                  final TimeOfDay? picked = await showTimePicker(
+                                    context: context,
+                                    initialTime: _selectedTime ?? TimeOfDay.now(),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _selectedTime = picked;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedTime == null
+                                              ? 'Select Time'
+                                              : _selectedTime!.format(context),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: _selectedTime == null ? Colors.grey : Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 12),
+
+                              // Car Type
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildDropdownField(
+                                        label: 'Car Type',
+                                        value: selectedCarType,
+                                        items: carTypes,
+                                        icon: Icons.car_rental,
+                                        hint: 'Select car type',
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedCarType = value;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 12),
+
+                              // Passenger Count Field
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _passengerController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Number of Passengers',
+                                          hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                        style: TextStyle(fontSize: 14, color: Colors.white70),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
+                            // Fields for "Rental"
+                            if (selectedBookingType == 'Rental') ...[
+                              // Rental Hours Selection
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildDropdownField(
+                                        label: 'Rental Duration',
+                                        value: selectedRentalHours,
+                                        items: ['4 Hours', '6 Hours', '8 Hours', '12 Hours', '24 Hours'],
+                                        icon: Icons.schedule,
+                                        hint: 'Select duration',
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedRentalHours = value;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 12),
+
+                              // Car Type
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildDropdownField(
+                                        label: 'Car Type',
+                                        value: selectedCarType,
+                                        items: carTypes,
+                                        icon: Icons.car_rental,
+                                        hint: 'Select car type',
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedCarType = value;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 12),
+
+                              // Passenger Count Field
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _passengerController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Number of Passengers',
+                                          hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                        style: TextStyle(fontSize: 14, color: Colors.white70),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
+                            // Fields for "Outstation"
+                            if (selectedBookingType == 'Outstation') ...[
+                              // Date Picker Field
+                              InkWell(
+                                onTap: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _selectedDate ?? DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(Duration(days: 365)),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _selectedDate = picked;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.calendar_today, color: Color(0xFFF79D39), size: 20),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedDate == null
+                                              ? 'Select Pickup Date'
+                                              : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: _selectedDate == null ? Colors.grey : Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 12),
+
+                              // Time Picker Field
+                              InkWell(
+                                onTap: () async {
+                                  final TimeOfDay? picked = await showTimePicker(
+                                    context: context,
+                                    initialTime: _selectedTime ?? TimeOfDay.now(),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _selectedTime = picked;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedTime == null
+                                              ? 'Select Pickup Time'
+                                              : _selectedTime!.format(context),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: _selectedTime == null ? Colors.grey : Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 12),
+
+                              // Car Type
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildDropdownField(
+                                        label: 'Car Type',
+                                        value: selectedCarType,
+                                        items: carTypes,
+                                        icon: Icons.car_rental,
+                                        hint: 'Select car type',
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedCarType = value;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 12),
+
+                              // Passenger Count Field
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _passengerController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Number of Passengers',
+                                          hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                        style: TextStyle(fontSize: 14, color: Colors.white70),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
                             SizedBox(height: 16),
 
                             SizedBox(
@@ -997,6 +1332,224 @@ class _HomePageState extends State<HomePage>
                           ],
                         ),
                       ),
+
+//                       Container(
+//                         decoration: BoxDecoration(
+//                           color:  Color(0xFF3c3c3c),
+//                           borderRadius: BorderRadius.circular(12),
+//                           boxShadow: [
+//                             BoxShadow(
+//                               color: Colors.black.withOpacity(0.15),
+//                               blurRadius: 12,
+//                               offset: Offset(0, 4),
+//                             ),
+//                           ],
+//                         ),
+//                         padding: EdgeInsets.all(16),
+//                         child: Column(
+//                           crossAxisAlignment: CrossAxisAlignment.start,
+//                           children: [
+//                             Text(
+//                               'Book Your Cab',
+//                               style: TextStyle(
+//                                 fontSize: 18,
+//                                 fontWeight: FontWeight.bold,
+//                                 color: Colors.white70,
+//                               ),
+//                             ),
+//                             SizedBox(height: 12),
+//                             Row(
+//                               children: [
+//                                 Icon(Icons.directions_car, color: Color(0xFFF79D39)),
+//                                 SizedBox(width: 12),
+//                                 Expanded(
+//                                   child: Column(
+//                                     crossAxisAlignment: CrossAxisAlignment.start,
+//                                     children: [
+//                                       Text(
+//                                         'Ride to $_destinationName',
+//                                         style: TextStyle(
+//                                           fontSize: 12,
+//                                           color: Colors.grey,
+//                                         ),
+//                                         maxLines: 1,
+//                                         overflow: TextOverflow.ellipsis,
+//                                       ),
+//                                       Text(
+//                                         'Estimated fare: ₹500-700',
+//                                         style: TextStyle(
+//                                           fontSize: 14,
+//                                           fontWeight: FontWeight.w600,
+//                                           color: Colors.white70,
+//                                         ),
+//                                       ),
+//                                     ],
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                             SizedBox(height: 16),
+//
+//                             // Date Picker Field
+//                             InkWell(
+//                               onTap: () async {
+//                                 final DateTime? picked = await showDatePicker(
+//                                   context: context,
+//                                   initialDate: _selectedDate ?? DateTime.now(),
+//                                   firstDate: DateTime.now(),
+//                                   lastDate: DateTime.now().add(Duration(days: 365)),
+//                                 );
+//                                 if (picked != null) {
+//                                   setState(() {
+//                                     _selectedDate = picked;
+//                                   });
+//                                 }
+//                               },
+//                               child: Container(
+//                                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+//                                 decoration: BoxDecoration(
+//                                   border: Border.all(color: Colors.grey.shade300),
+//                                   borderRadius: BorderRadius.circular(8),
+//                                 ),
+//                                 child: Row(
+//                                   children: [
+//                                     Icon(Icons.calendar_today, color: Color(0xFFF79D39), size: 20),
+//                                     SizedBox(width: 12),
+//                                     Expanded(
+//                                       child: Text(
+//                                         _selectedDate == null
+//                                             ? 'Select Date'
+//                                             : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
+//                                         style: TextStyle(
+//                                           fontSize: 14,
+//                                           color: _selectedDate == null ? Colors.grey : Colors.black87,
+//                                         ),
+//                                       ),
+//                                     ),
+//                                   ],
+//                                 ),
+//                               ),
+//                             ),
+//                             SizedBox(height: 12),
+//
+//                             // Time Picker Field
+//                             InkWell(
+//                               onTap: () async {
+//                                 final TimeOfDay? picked = await showTimePicker(
+//                                   context: context,
+//                                   initialTime: _selectedTime ?? TimeOfDay.now(),
+//                                 );
+//                                 if (picked != null) {
+//                                   setState(() {
+//                                     _selectedTime = picked;
+//                                   });
+//                                 }
+//                               },
+//                               child: Container(
+//                                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+//                                 decoration: BoxDecoration(
+//                                   border: Border.all(color: Colors.grey.shade300),
+//                                   borderRadius: BorderRadius.circular(8),
+//                                 ),
+//                                 child: Row(
+//                                   children: [
+//                                     Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
+//                                     SizedBox(width: 12),
+//                                     Expanded(
+//                                       child: Text(
+//                                         _selectedTime == null
+//                                             ? 'Select Time'
+//                                             : _selectedTime!.format(context),
+//                                         style: TextStyle(
+//                                           fontSize: 14,
+//                                           color: _selectedTime == null ? Colors.grey : Colors.black87,
+//                                         ),
+//                                       ),
+//                                     ),
+//                                   ],
+//                                 ),
+//                               ),
+//                             ),
+//                             SizedBox(height: 12),
+// //car type
+//                             Container(
+//                               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+//                               decoration: BoxDecoration(
+//                                 border: Border.all(color: Colors.grey.shade300),
+//                                 borderRadius: BorderRadius.circular(8),
+//                               ),
+//                               child: Row(
+//                                 children: [
+//                                   Expanded(
+//                                     child: _buildDropdownField(
+//                                       label: 'Car Type',
+//                                       value: selectedCarType,
+//                                       items: carTypes,
+//                                       icon: Icons.car_rental,
+//                                       hint: 'Select car type',
+//                                       onChanged: (value) {
+//                                         setState(() {
+//                                           selectedCarType = value;
+//                                         });
+//                                       },
+//                                     ),
+//                                   ),
+//                                 ],
+//                               ),
+//
+//                             ),
+//
+//                             // Passenger Count Field
+//                             Container(
+//                               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+//                               decoration: BoxDecoration(
+//                                 border: Border.all(color: Colors.grey.shade300),
+//                                 borderRadius: BorderRadius.circular(8),
+//                               ),
+//                               child: Row(
+//                                 children: [
+//                                   Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+//                                   SizedBox(width: 12),
+//                                   Expanded(
+//                                     child: TextField(
+//                                       controller: _passengerController,
+//                                       keyboardType: TextInputType.number,
+//                                       decoration: InputDecoration(
+//                                         hintText: 'Number of Passengers',
+//                                         hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+//                                         border: InputBorder.none,
+//                                         isDense: true,
+//                                         contentPadding: EdgeInsets.zero,
+//                                       ),
+//                                       style: TextStyle(fontSize: 14, color: Colors.black87),
+//                                     ),
+//                                   ),
+//                                 ],
+//                               ),
+//                             ),
+//                             SizedBox(height: 16),
+//
+//                             SizedBox(
+//                               width: double.infinity,
+//                               child: ElevatedButton(
+//                                 onPressed: _bookCab,
+//                                 style: ElevatedButton.styleFrom(
+//                                   backgroundColor: Color(0xFFF79D39),
+//                                   foregroundColor: Colors.white,
+//                                   padding: EdgeInsets.symmetric(vertical: 12),
+//                                   shape: RoundedRectangleBorder(
+//                                     borderRadius: BorderRadius.circular(8),
+//                                   ),
+//                                 ),
+//                                 child: Text(
+//                                   'Book Cab',
+//                                   style: TextStyle(fontWeight: FontWeight.w600),
+//                                 ),
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
 
                     // Cab Booked Status
                     if (_cabBooked)

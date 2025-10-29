@@ -7,9 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'dart:math' as math;
-import 'settings_page.dart';
-import 'safety_page.dart';
-import 'ride_history.dart';
+
 
 class MapPage extends StatefulWidget {
   @override
@@ -945,142 +943,6 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  // Widget _buildDestinationBanner() {
-  //   if (!_showDestinationBanner || _currentRoute == null) return const SizedBox();
-  //
-  //   return Positioned(
-  //     bottom: 20,
-  //     left: 16,
-  //     right: 16,
-  //     child: Material(
-  //       elevation: 8,
-  //       borderRadius: BorderRadius.circular(12),
-  //       child: Container(
-  //         padding: const EdgeInsets.all(16),
-  //         decoration: BoxDecoration(
-  //           color: Colors.white,
-  //           borderRadius: BorderRadius.circular(12),
-  //         ),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           children: [
-  //             Row(
-  //               children: [
-  //                 const Icon(Icons.location_on, color: Colors.red, size: 20),
-  //                 const SizedBox(width: 8),
-  //                 Expanded(
-  //                   child: Text(
-  //                     _selectedDestinationName,
-  //                     style: const TextStyle(
-  //                       fontWeight: FontWeight.bold,
-  //                       fontSize: 16,
-  //                     ),
-  //                     maxLines: 1,
-  //                     overflow: TextOverflow.ellipsis,
-  //                   ),
-  //                 ),
-  //                 IconButton(
-  //                   onPressed: _dismissDestinationBanner,
-  //                   icon: const Icon(Icons.close, size: 20),
-  //                   padding: EdgeInsets.zero,
-  //                   constraints: const BoxConstraints(),
-  //                 ),
-  //               ],
-  //             ),
-  //             const SizedBox(height: 12),
-  //             Row(
-  //               children: [
-  //                 Container(
-  //                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-  //                   decoration: BoxDecoration(
-  //                     color: Colors.blue.shade50,
-  //                     borderRadius: BorderRadius.circular(20),
-  //                   ),
-  //                   child: Row(
-  //                     mainAxisSize: MainAxisSize.min,
-  //                     children: [
-  //                       const Icon(Icons.straighten, size: 16, color: Color(0xFFF79D39)),
-  //                       const SizedBox(width: 4),
-  //                       Text(
-  //                         _currentRoute!.distance,
-  //                         style: const TextStyle(
-  //                           color: Color(0xFFF79D39),
-  //                           fontWeight: FontWeight.w600,
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //                 const SizedBox(width: 12),
-  //                 Container(
-  //                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-  //                   decoration: BoxDecoration(
-  //                     color: Colors.green.shade50,
-  //                     borderRadius: BorderRadius.circular(20),
-  //                   ),
-  //                   child: Row(
-  //                     mainAxisSize: MainAxisSize.min,
-  //                     children: [
-  //                       const Icon(Icons.access_time, size: 16, color: Color(0xFFF79D39)),
-  //                       const SizedBox(width: 4),
-  //                       Text(
-  //                         _currentRoute!.duration,
-  //                         style: const TextStyle(
-  //                           color: Color(0xFFF79D39),
-  //                           fontWeight: FontWeight.w600,
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //                 const Spacer(),
-  //                 Text(
-  //                   '₹${((_currentRoute!.distanceValue / 1000) * 12).toStringAsFixed(0)}',
-  //                   style: const TextStyle(
-  //                     fontSize: 18,
-  //                     fontWeight: FontWeight.bold,
-  //                     color: Colors.white,
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //             const SizedBox(height: 16),
-  //             SizedBox(
-  //               width: double.infinity,
-  //               child: ElevatedButton(
-  //                 onPressed: _bookCab,
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: Color(0xFFF79D39),
-  //                   foregroundColor: Colors.white,
-  //                   padding: const EdgeInsets.symmetric(vertical: 14),
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(8),
-  //                   ),
-  //                   elevation: 2,
-  //                 ),
-  //                 child: const Row(
-  //                   mainAxisAlignment: MainAxisAlignment.center,
-  //                   children: [
-  //                     Icon(Icons.local_taxi, size: 20),
-  //                     SizedBox(width: 8),
-  //                     Text(
-  //                       'Book Cab',
-  //                       style: TextStyle(
-  //                         fontSize: 16,
-  //                         fontWeight: FontWeight.w600,
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 
   // Add this widget method for cab status
   Widget _buildCabStatusBanner() {
@@ -1463,245 +1325,6 @@ class _MapPageState extends State<MapPage> {
     _showSnackBar('Map cleared');
   }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Column(
-        children: [
-          // Header with profile info
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFFF79D39), Colors.orange],
-              ),
-            ),
-            child: DrawerHeader(
-              margin: EdgeInsets.zero,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Color(0xFFF79D39),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'User Name',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  // Text(
-                  //   'john.doe@email.com',
-                  //   style: TextStyle(
-                  //     color: Colors.white.withOpacity(0.8),
-                  //     fontSize: 14,
-                  //   ),
-                  // ),
-                  const SizedBox(height: 8),
-                  Row(
-                    // children: [
-                    //   Icon(
-                    //     Icons.star,
-                    //     color: Colors.yellow.shade300,
-                    //     size: 16,
-                    //   ),
-                    //   // const SizedBox(width: 4),
-                    //   // const Text(
-                    //   //   '4.8',
-                    //   //   style: TextStyle(
-                    //   //     color: Colors.white,
-                    //   //     fontSize: 14,
-                    //   //     fontWeight: FontWeight.w500,
-                    //   //   ),
-                    //   // ),
-                    // ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Expanded(
-          //   child: ListView(
-          //     padding: EdgeInsets.zero,
-          //     children: [
-          //       _buildDrawerItem(
-          //         icon: Icons.history,
-          //         title: 'My Rides',
-          //         onTap: () {
-          //           Navigator.pop(context);
-          //           Navigator.push(
-          //             context,
-          //             MaterialPageRoute(builder: (context) => const RideHistoryPage()),
-          //           );
-          //         },
-          //       ),
-          //       _buildDrawerItem(
-          //         icon: Icons.notifications_outlined,
-          //         title: 'Notifications',
-          //         badge: '3',
-          //         onTap: () {
-          //           Navigator.pop(context);
-          //           // Navigator.push(
-          //           //   context,
-          //           //   MaterialPageRoute(builder: (context) => const NotificationsPage()),
-          //           // );
-          //         },
-          //       ),
-          //       _buildDrawerItem(
-          //         icon: Icons.security,
-          //         title: 'Safety',
-          //         onTap: () {
-          //           Navigator.pop(context);
-          //           Navigator.push(
-          //             context,
-          //             MaterialPageRoute(builder: (context) => const SafetyPage()),
-          //           );
-          //         },
-          //       ),
-          //       _buildDrawerItem(
-          //         icon: Icons.help_outline,
-          //         title: 'Help',
-          //         onTap: () {
-          //           Navigator.pop(context);
-          //           // Navigator.push(
-          //           //   context,
-          //           //   MaterialPageRoute(builder: (context) => const HelpPage()),
-          //           // );
-          //         },
-          //       ),
-          //       const Divider(),
-          //       _buildDrawerItem(
-          //         icon: Icons.settings_outlined,
-          //         title: 'Settings',
-          //         onTap: () {
-          //           Navigator.pop(context);
-          //           Navigator.push(
-          //             context,
-          //             MaterialPageRoute(builder: (context) => const SettingsPage()),
-          //           );
-          //         },
-          //       ),
-          //       _buildDrawerItem(
-          //         icon: Icons.logout,
-          //         title: 'Logout',
-          //         textColor: Colors.red,
-          //         onTap: () {
-          //           Navigator.pop(context);
-          //           _showLogoutDialog(context);
-          //         },
-          //       ),
-          //     ],
-          //   ),
-          // ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Logout',
-            style: TextStyle(
-              color: Color(0xFFF79D39),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: const Text(
-            'Are you sure you want to logout from your account?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Implement actual logout logic here
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Logged out successfully'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                // Navigate to login page or clear user session
-                // Navigator.pushReplacementNamed(context, '/login');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Logout'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildDrawerItem({
-    required IconData icon,
-    required String title,
-    String? badge,
-    Color? textColor,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: textColor ?? Colors.grey.shade700,
-      ),
-      title: Row(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: textColor ?? Colors.grey.shade800,
-              fontSize: 16,
-            ),
-          ),
-          if (badge != null) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                badge,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-      onTap: onTap,
-    );
-  }
 
 
 
@@ -1709,7 +1332,13 @@ class _MapPageState extends State<MapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey, // Add this key
-      drawer: _buildDrawer(), // Add this drawer
+       // Add this drawer
+      appBar: AppBar(
+        backgroundColor: Color(0xFFF79D39) ,
+        title: Text('Choose Your Destination', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white),),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: Stack(
         children: [
           // Google Map
@@ -1929,7 +1558,6 @@ class _MapPageState extends State<MapPage> {
   }
 }
 
-// Model class for Route Details
 class RouteDetails {
   final String distance;
   final String duration;
