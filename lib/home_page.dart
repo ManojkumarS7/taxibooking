@@ -206,12 +206,15 @@ class _HomePageState extends State<HomePage>
   bool _showPredictions = false;
   Timer? _debounce;
   bool _isSearching = false;
+  bool _isBookingCab = false;
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  final TextEditingController _phonenoController = TextEditingController();
   final TextEditingController _passengerController = TextEditingController();
   String? selectedBookingType;
   String? selectedRentalHours;
+  Map<String, dynamic>? _bookingDetails;
 
 
 
@@ -458,54 +461,269 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-
-  void _bookCab() {
-
-    if (_selectedDate == null) {
+  Future<void> _bookCab() async {
+    // Validation checks
+    if (selectedBookingType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a date')),
+        SnackBar(content: Text('Please select a ride type')),
       );
       return;
     }
 
-    if (_selectedTime == null) {
+    if (_phonenoController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a time')),
+        SnackBar(content: Text('Please enter your mobile number')),
       );
       return;
     }
 
-    if (_passengerController.text.isEmpty) {
+    // Validation for Schedule Later and Outstation
+    if (selectedBookingType == 'Schedule Later' || selectedBookingType == 'Outstation') {
+      if (_selectedDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please select a date')),
+        );
+        return;
+      }
+
+      if (_selectedTime == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please select a time')),
+        );
+        return;
+      }
+    }
+
+    // Validation for Rental
+    if (selectedBookingType == 'Rental') {
+      if (selectedRentalHours == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please select rental duration')),
+        );
+        return;
+      }
+    }
+
+    if (selectedCarType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter number of passengers')),
+        SnackBar(content: Text('Please select a car type')),
       );
       return;
     }
 
+    // Set loading state
     setState(() {
-      _cabBooked = true;
+      _isBookingCab = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Cab booked successfully!'),
-        duration: Duration(seconds: 3),
-        backgroundColor: Colors.green,
-      ),
-    );
+    try {
+      // Prepare pickup datetime
+      String pickupDatetime;
+      if (selectedBookingType == 'Ride Now' || selectedBookingType == 'Rental') {
+        // For Ride Now and Rental, use current datetime
+        final now = DateTime.now();
+        pickupDatetime = '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      } else {
+        // For Schedule Later and Outstation
+        pickupDatetime = '${_selectedDate!.day.toString().padLeft(2, '0')}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.year} ${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+      }
 
-    Future.delayed(Duration(seconds: 3), () {
+      // Map ride types - FIXED: rental should be 'hourly' or 'package'
+      String ridesType;
+      String tripType = 'one way';
+
+      switch (selectedBookingType) {
+        case 'Ride Now':
+          ridesType = 'local';
+          break;
+        case 'Schedule Later':
+          ridesType = 'local';
+          break;
+        case 'Rental':
+          ridesType = 'hourly';  // FIXED: Changed from 'rental' to 'hourly'
+          break;
+        case 'Outstation':
+          ridesType = 'outstation';
+          break;
+        default:
+          ridesType = 'local';
+      }
+
+      // Prepare API request body
+      final Map<String, dynamic> requestBody = {
+        "rides_type": ridesType,
+        "trip_type": tripType,
+        "pickup_location": _currentLocationName,
+        "drop_latitude": "",
+        "drop_location": _destinationName,
+        "drop_longitude": "",
+        "pickup_datetime": pickupDatetime,
+        "pickup_latitude": _currentPosition?.latitude.toString() ?? "",
+        "pickup_longitude": _currentPosition?.longitude.toString() ?? "",
+        "phone_number": _phonenoController.text,
+      };
+
+      // Add rental hours if applicable - Extract just the number
+      if (selectedBookingType == 'Rental' && selectedRentalHours != null) {
+        // Extract number from "4 Hours" -> "4"
+        String hoursNumber = selectedRentalHours!.split(' ')[0];
+        requestBody["rental_hours"] = hoursNumber;
+      }
+
+      print('=== Booking Request ===');
+      print('Booking Type: $selectedBookingType');
+      print('Mapped rides_type: $ridesType');
+      print('URL: https://cabnew.staging-rdegi.com/api/taxi/booking');
+      print('Body: ${json.encode(requestBody)}');
+      if (selectedBookingType == 'Rental') {
+        print('Rental Hours Selected: $selectedRentalHours');
+        print('Rental Hours Sent: ${requestBody["rental_hours"]}');
+      }
+
+      // Make API call without Accept-Encoding to avoid gzip issues
+      final response = await http.post(
+        Uri.parse('https://cabnew.staging-rdegi.com/api/taxi/booking'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+        },
+        body: json.encode(requestBody),
+      );
+
+      print('Response Status: ${response.statusCode}');
+
+      // Stop loading immediately after getting response
+      setState(() {
+        _isBookingCab = false;
+      });
+
+      // Check for success status codes (200, 201)
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Booking successful!');
+
+        // Try to log response body safely (optional)
+        try {
+          print('Response Body: ${response.body}');
+        } catch (e) {
+          print('Could not log response body: $e');
+        }
+
+        // Update booking state
+        setState(() {
+          _cabBooked = true;
+          _bookingDetails = {
+            'rideType': selectedBookingType,
+            'pickupLocation': _currentLocationName,
+            'dropLocation': _destinationName,
+            'carType': selectedCarType,
+            'phoneNumber': _phonenoController.text,
+            'passengerCount': _passengerController.text.isNotEmpty
+                ? _passengerController.text
+                : 'N/A',
+            'pickupDate': _selectedDate != null
+                ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}'
+                : 'Now',
+            'pickupTime': _selectedTime != null
+                ? _selectedTime!.format(context)
+                : 'Immediate',
+            'rentalHours': selectedRentalHours,
+            'bookingTime': DateTime.now(),
+          };
+        });
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Cab booked successfully! OTP sent to your phone.'),
+              duration: Duration(seconds: 3),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Show arriving message after delay
+          Future.delayed(Duration(seconds: 3), () {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Your cab is arriving soon...'),
+                  duration: Duration(seconds: 2),
+                  backgroundColor: Color(0xFFF79D39),
+                ),
+              );
+            }
+          });
+        }
+
+        // Success - exit the function
+        return;
+      }
+
+      // Handle error responses (status codes other than 200/201)
+      print('❌ Booking failed with status: ${response.statusCode}');
+
+      String errorMessage = 'Failed to book cab. Please try again.';
+
+      // Try to parse error message from response
+      try {
+        print('Attempting to parse error response...');
+        final errorData = json.decode(response.body);
+        print('Error response data: $errorData');
+
+        if (errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        } else if (errorData['msg'] != null) {
+          errorMessage = errorData['msg'];
+        } else if (errorData['error'] != null) {
+          errorMessage = errorData['error'];
+        }
+        print('Error message: $errorMessage');
+      } catch (e) {
+        print('Could not parse error response: $e');
+        // Try to show raw response if parsing fails
+        try {
+          print('Raw response body: ${response.body}');
+        } catch (e2) {
+          print('Could not read raw response: $e2');
+        }
+      }
+
+      // Show error message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Your cab is arriving soon...'),
-            duration: Duration(seconds: 2),
-            backgroundColor: Color(0xFFF79D39),
+            content: Text(errorMessage),
+            duration: Duration(seconds: 4),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    });
+
+    } catch (e, stackTrace) {
+      // Stop loading
+      setState(() {
+        _isBookingCab = false;
+      });
+
+      print('=== Network/Exception Error ===');
+      print('Error: $e');
+      print('Error type: ${e.runtimeType}');
+      print('Stack trace: $stackTrace');
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Network error: ${e.toString().split(':').first}. Please try again.'),
+            duration: Duration(seconds: 4),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
+
 
   @override
   void dispose() {
@@ -523,7 +741,54 @@ class _HomePageState extends State<HomePage>
 
   Widget build(BuildContext context) {
     return Scaffold(
+
+      appBar: AppBar(
+        backgroundColor: Color(0xFFF79D39),
+        elevation: 0,
+        title: Text(
+          'Taxi Booking',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFF79D39), Color(0xFFFF8C42)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
+        actions: [
+          Container(
+            margin: EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+              },
+              icon: Icon(Icons.person, color: Colors.white),
+              iconSize: 26,
+            ),
+          )
+        ],
+        centerTitle: true,
+        shadowColor: Color(0xFFF79D39).withOpacity(0.5),
+        toolbarHeight: 65,
+      ),
       body: Stack(
+
         children: [
           // Animated background
           AnimatedBackground(
@@ -537,7 +802,7 @@ class _HomePageState extends State<HomePage>
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Header
                     Row(
@@ -551,24 +816,7 @@ class _HomePageState extends State<HomePage>
                             color: Colors.white,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ProfilePage()),
-                            );
-                          },
-                          child: CircleAvatar(
-                            radius: 24,
-                            backgroundColor: Color(0xFFF79D39),
-                            child: Icon(Icons.person, color: Colors.white),
-                          ),
-                        )
-                        // CircleAvatar(
-                        //   radius: 24,
-                        //   backgroundColor: Color(0xFFF79D39),
-                        //   child: Icon(Icons.person, color: Colors.white),
-                        // ),
+
                       ],
                     ),
                     SizedBox(height: 24),
@@ -764,7 +1012,7 @@ class _HomePageState extends State<HomePage>
                           ),
                       ],
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 20),
 
                     // Select on Map Button
                     SizedBox(
@@ -783,8 +1031,39 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
                     ),
+                    SizedBox(height: 100),
+
+                    Container(
+
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFF79D39), Color(0xFFFF8C42)],
+                          begin: Alignment.center,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFFF79D39).withOpacity(0.4),
+                            blurRadius: 20,
+                            offset: Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.local_taxi_sharp,
+                        size: 120,
+                        color: Colors.white,
+                      ),
+                    ),
+
                     SizedBox(height: 24),
 
+                    Text("Taxi Booking", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),),
+
+                    SizedBox(height: 24),
                     // Booking Card
                     if (_showBookingCard && !_cabBooked)
 
@@ -843,6 +1122,36 @@ class _HomePageState extends State<HomePage>
                                 ),
                               ],
                             ),
+                            SizedBox(height: 16),
+
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.call, color: Color(0xFFF79D39), size: 20),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _phonenoController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter Your Mobile Number',
+                                        hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                      style: TextStyle(fontSize: 14, color: Colors.white70),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                             SizedBox(height: 16),
 
                             // Ride Type Selection
@@ -906,7 +1215,44 @@ class _HomePageState extends State<HomePage>
                                 ),
                               ),
                               SizedBox(height: 12),
-
+                              InkWell(
+                                onTap: () async {
+                                  final TimeOfDay? picked = await showTimePicker(
+                                    context: context,
+                                    initialTime: _selectedTime ?? TimeOfDay.now(),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _selectedTime = picked;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedTime == null
+                                              ? 'Select Time'
+                                              : _selectedTime!.format(context),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: _selectedTime == null ? Colors.grey : Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 12),
                               // Passenger Count Field
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -1333,262 +1679,64 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
 
-//                       Container(
-//                         decoration: BoxDecoration(
-//                           color:  Color(0xFF3c3c3c),
-//                           borderRadius: BorderRadius.circular(12),
-//                           boxShadow: [
-//                             BoxShadow(
-//                               color: Colors.black.withOpacity(0.15),
-//                               blurRadius: 12,
-//                               offset: Offset(0, 4),
-//                             ),
-//                           ],
-//                         ),
-//                         padding: EdgeInsets.all(16),
-//                         child: Column(
-//                           crossAxisAlignment: CrossAxisAlignment.start,
-//                           children: [
-//                             Text(
-//                               'Book Your Cab',
-//                               style: TextStyle(
-//                                 fontSize: 18,
-//                                 fontWeight: FontWeight.bold,
-//                                 color: Colors.white70,
-//                               ),
-//                             ),
-//                             SizedBox(height: 12),
-//                             Row(
-//                               children: [
-//                                 Icon(Icons.directions_car, color: Color(0xFFF79D39)),
-//                                 SizedBox(width: 12),
-//                                 Expanded(
-//                                   child: Column(
-//                                     crossAxisAlignment: CrossAxisAlignment.start,
-//                                     children: [
-//                                       Text(
-//                                         'Ride to $_destinationName',
-//                                         style: TextStyle(
-//                                           fontSize: 12,
-//                                           color: Colors.grey,
-//                                         ),
-//                                         maxLines: 1,
-//                                         overflow: TextOverflow.ellipsis,
-//                                       ),
-//                                       Text(
-//                                         'Estimated fare: ₹500-700',
-//                                         style: TextStyle(
-//                                           fontSize: 14,
-//                                           fontWeight: FontWeight.w600,
-//                                           color: Colors.white70,
-//                                         ),
-//                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                             SizedBox(height: 16),
-//
-//                             // Date Picker Field
-//                             InkWell(
-//                               onTap: () async {
-//                                 final DateTime? picked = await showDatePicker(
-//                                   context: context,
-//                                   initialDate: _selectedDate ?? DateTime.now(),
-//                                   firstDate: DateTime.now(),
-//                                   lastDate: DateTime.now().add(Duration(days: 365)),
-//                                 );
-//                                 if (picked != null) {
-//                                   setState(() {
-//                                     _selectedDate = picked;
-//                                   });
-//                                 }
-//                               },
-//                               child: Container(
-//                                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-//                                 decoration: BoxDecoration(
-//                                   border: Border.all(color: Colors.grey.shade300),
-//                                   borderRadius: BorderRadius.circular(8),
-//                                 ),
-//                                 child: Row(
-//                                   children: [
-//                                     Icon(Icons.calendar_today, color: Color(0xFFF79D39), size: 20),
-//                                     SizedBox(width: 12),
-//                                     Expanded(
-//                                       child: Text(
-//                                         _selectedDate == null
-//                                             ? 'Select Date'
-//                                             : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
-//                                         style: TextStyle(
-//                                           fontSize: 14,
-//                                           color: _selectedDate == null ? Colors.grey : Colors.black87,
-//                                         ),
-//                                       ),
-//                                     ),
-//                                   ],
-//                                 ),
-//                               ),
-//                             ),
-//                             SizedBox(height: 12),
-//
-//                             // Time Picker Field
-//                             InkWell(
-//                               onTap: () async {
-//                                 final TimeOfDay? picked = await showTimePicker(
-//                                   context: context,
-//                                   initialTime: _selectedTime ?? TimeOfDay.now(),
-//                                 );
-//                                 if (picked != null) {
-//                                   setState(() {
-//                                     _selectedTime = picked;
-//                                   });
-//                                 }
-//                               },
-//                               child: Container(
-//                                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-//                                 decoration: BoxDecoration(
-//                                   border: Border.all(color: Colors.grey.shade300),
-//                                   borderRadius: BorderRadius.circular(8),
-//                                 ),
-//                                 child: Row(
-//                                   children: [
-//                                     Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
-//                                     SizedBox(width: 12),
-//                                     Expanded(
-//                                       child: Text(
-//                                         _selectedTime == null
-//                                             ? 'Select Time'
-//                                             : _selectedTime!.format(context),
-//                                         style: TextStyle(
-//                                           fontSize: 14,
-//                                           color: _selectedTime == null ? Colors.grey : Colors.black87,
-//                                         ),
-//                                       ),
-//                                     ),
-//                                   ],
-//                                 ),
-//                               ),
-//                             ),
-//                             SizedBox(height: 12),
-// //car type
-//                             Container(
-//                               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-//                               decoration: BoxDecoration(
-//                                 border: Border.all(color: Colors.grey.shade300),
-//                                 borderRadius: BorderRadius.circular(8),
-//                               ),
-//                               child: Row(
-//                                 children: [
-//                                   Expanded(
-//                                     child: _buildDropdownField(
-//                                       label: 'Car Type',
-//                                       value: selectedCarType,
-//                                       items: carTypes,
-//                                       icon: Icons.car_rental,
-//                                       hint: 'Select car type',
-//                                       onChanged: (value) {
-//                                         setState(() {
-//                                           selectedCarType = value;
-//                                         });
-//                                       },
-//                                     ),
-//                                   ),
-//                                 ],
-//                               ),
-//
-//                             ),
-//
-//                             // Passenger Count Field
-//                             Container(
-//                               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-//                               decoration: BoxDecoration(
-//                                 border: Border.all(color: Colors.grey.shade300),
-//                                 borderRadius: BorderRadius.circular(8),
-//                               ),
-//                               child: Row(
-//                                 children: [
-//                                   Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
-//                                   SizedBox(width: 12),
-//                                   Expanded(
-//                                     child: TextField(
-//                                       controller: _passengerController,
-//                                       keyboardType: TextInputType.number,
-//                                       decoration: InputDecoration(
-//                                         hintText: 'Number of Passengers',
-//                                         hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-//                                         border: InputBorder.none,
-//                                         isDense: true,
-//                                         contentPadding: EdgeInsets.zero,
-//                                       ),
-//                                       style: TextStyle(fontSize: 14, color: Colors.black87),
-//                                     ),
-//                                   ),
-//                                 ],
-//                               ),
-//                             ),
-//                             SizedBox(height: 16),
-//
-//                             SizedBox(
-//                               width: double.infinity,
-//                               child: ElevatedButton(
-//                                 onPressed: _bookCab,
-//                                 style: ElevatedButton.styleFrom(
-//                                   backgroundColor: Color(0xFFF79D39),
-//                                   foregroundColor: Colors.white,
-//                                   padding: EdgeInsets.symmetric(vertical: 12),
-//                                   shape: RoundedRectangleBorder(
-//                                     borderRadius: BorderRadius.circular(8),
-//                                   ),
-//                                 ),
-//                                 child: Text(
-//                                   'Book Cab',
-//                                   style: TextStyle(fontWeight: FontWeight.w600),
-//                                 ),
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
 
-                    // Cab Booked Status
-                    if (_cabBooked)
+
+
+                    if (_cabBooked && _bookingDetails != null)
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          border: Border.all(
-                            color: Colors.green,
-                            width: 1.5,
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF2E7D32), Color(0xFF43A047)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: Offset(0, 6),
+                            ),
+                          ],
                         ),
-                        padding: EdgeInsets.all(16),
+                        padding: EdgeInsets.all(20),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Header
                             Row(
                               children: [
-                                Icon(Icons.check_circle,
-                                    color: Colors.green, size: 28),
-                                SizedBox(width: 12),
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.check_circle,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                ),
+                                SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Your Cab is Booked',
+                                        'Booking Confirmed!',
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: 20,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.green,
+                                          color: Colors.white,
                                         ),
                                       ),
                                       SizedBox(height: 4),
                                       Text(
-                                        'Cab Will arrive in ~5 minutes',
+                                        'Your cab will arrive soon',
                                         style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
+                                          fontSize: 14,
+                                          color: Colors.white.withOpacity(0.9),
                                         ),
                                       ),
                                     ],
@@ -1596,9 +1744,234 @@ class _HomePageState extends State<HomePage>
                                 ),
                               ],
                             ),
+
+                            SizedBox(height: 24),
+
+                            // Divider
+                            Container(
+                              height: 1,
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+
+                            SizedBox(height: 20),
+
+                            // Booking Details Header
+                            Text(
+                              'Booking Details',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+
+                            SizedBox(height: 16),
+
+                            // Ride Type
+                            _buildDetailRow(
+                              icon: Icons.local_taxi,
+                              label: 'Ride Type',
+                              value: _bookingDetails!['rideType'] ?? 'N/A',
+                            ),
+
+                            SizedBox(height: 12),
+
+                            // Pickup Location
+                            _buildDetailRow(
+                              icon: Icons.location_on,
+                              label: 'Pickup Location',
+                              value: _bookingDetails!['pickupLocation'] ?? 'N/A',
+                              maxLines: 2,
+                            ),
+
+                            SizedBox(height: 12),
+
+                            // Drop Location
+                            _buildDetailRow(
+                              icon: Icons.place,
+                              label: 'Drop Location',
+                              value: _bookingDetails!['dropLocation'] ?? 'N/A',
+                              maxLines: 2,
+                            ),
+
+                            SizedBox(height: 12),
+
+                            // Car Type
+                            if (_bookingDetails!['carType'] != null)
+                              Column(
+                                children: [
+                                  _buildDetailRow(
+                                    icon: Icons.directions_car,
+                                    label: 'Car Type',
+                                    value: _bookingDetails!['carType'],
+                                  ),
+                                  SizedBox(height: 12),
+                                ],
+                              ),
+
+                            // Pickup Date & Time
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildDetailRow(
+                                    icon: Icons.calendar_today,
+                                    label: 'Date',
+                                    value: _bookingDetails!['pickupDate'] ?? 'N/A',
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildDetailRow(
+                                    icon: Icons.access_time,
+                                    label: 'Time',
+                                    value: _bookingDetails!['pickupTime'] ?? 'N/A',
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            SizedBox(height: 12),
+
+                            // Rental Hours (if applicable)
+                            if (_bookingDetails!['rentalHours'] != null)
+                              Column(
+                                children: [
+                                  _buildDetailRow(
+                                    icon: Icons.schedule,
+                                    label: 'Rental Duration',
+                                    value: _bookingDetails!['rentalHours'],
+                                  ),
+                                  SizedBox(height: 12),
+                                ],
+                              ),
+
+                            // Phone Number
+                            _buildDetailRow(
+                              icon: Icons.phone,
+                              label: 'Contact Number',
+                              value: _bookingDetails!['phoneNumber'] ?? 'N/A',
+                            ),
+
+                            SizedBox(height: 20),
+
+                            // Divider
+                            Container(
+                              height: 1,
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+
+                            SizedBox(height: 20),
+
+                            // Status Info
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'You will receive an OTP on your registered mobile number',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.95),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            SizedBox(height: 16),
+
+                            // Action Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      // Track cab functionality
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Track Cab feature coming soon!'),
+                                          backgroundColor: Color(0xFFF79D39),
+                                        ),
+                                      );
+                                    },
+                                    icon: Icon(Icons.my_location, size: 20),
+                                    label: Text('Track Cab'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Color(0xFF2E7D32),
+                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      // Cancel booking functionality
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: Text('Cancel Booking?'),
+                                          content: Text('Are you sure you want to cancel this booking?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: Text('No'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _cabBooked = false;
+                                                  _bookingDetails = null;
+                                                  _showBookingCard = false;
+                                                });
+                                                Navigator.pop(context);
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Booking cancelled'),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                              },
+                                              child: Text('Yes', style: TextStyle(color: Colors.red)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                    icon: Icon(Icons.cancel_outlined, size: 20),
+                                    label: Text('Cancel'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      side: BorderSide(color: Colors.white, width: 2),
+                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
+
                   ],
                 ),
               ),
@@ -1608,6 +1981,59 @@ class _HomePageState extends State<HomePage>
       ),
     );
   }
+
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    int maxLines = 1,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 18,
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildDropdownField({
     required String label,
     required String? value,
@@ -1661,6 +2087,5 @@ class _HomePageState extends State<HomePage>
       ],
     );
   }
-
 }
 

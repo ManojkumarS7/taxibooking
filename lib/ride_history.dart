@@ -1,7 +1,67 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'authservice.dart';
 
-class RideHistoryPage extends StatelessWidget {
+class RideHistoryPage extends StatefulWidget {
   const RideHistoryPage({Key? key}) : super(key: key);
+
+  @override
+  State<RideHistoryPage> createState() => _RideHistoryPageState();
+}
+
+class _RideHistoryPageState extends State<RideHistoryPage> {
+  List<dynamic> rideHistory = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRideHistory();
+  }
+
+  Future<void> fetchRideHistory() async {
+    try {
+      // ✅ Get the full bearer token header
+      final authHeader = await AuthService.getAuthHeader();
+
+      print("token $authHeader");
+
+      if (authHeader == null) {
+        print("⚠️ No token found, please log in again");
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/booking/history');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("📡 Ride History Response: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+
+        setState(() {
+          rideHistory = jsonData['data'] ?? [];
+          isLoading = false;
+        });
+      } else {
+        print("❌ Failed to fetch ride history: ${response.statusCode}");
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      print("❌ Error fetching ride history: $e");
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,11 +75,43 @@ class RideHistoryPage extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Color(0xFFF79D39),
+        backgroundColor: const Color(0xFFF79D39),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: const NoRidesWidget(),
+      body: isLoading
+          ? const Center(
+        child: CircularProgressIndicator(color: Color(0xFFF79D39)),
+      )
+          : rideHistory.isEmpty
+          ? const NoRidesWidget()
+          : ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: rideHistory.length,
+        itemBuilder: (context, index) {
+          final ride = rideHistory[index];
+          return Card(
+            elevation: 3,
+            margin: const EdgeInsets.only(bottom: 16),
+            child: ListTile(
+              leading: const Icon(Icons.local_taxi, color: Color(0xFFF79D39)),
+              title: Text(
+                "From: ${ride['pick_up_location'] ?? 'N/A'}",
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                "To: ${ride['drop_up_location'] ?? 'N/A'}\nPassenger Name: ${ride['user_name'] ?? ''}",
+              ),
+              trailing: Text(
+                "₹${ride['total_fare'] ?? '300'}",
+                style: const TextStyle(
+                    color: Color(0xFFF79D39),
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -35,7 +127,6 @@ class NoRidesWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Car icon with circular background
             Container(
               width: 120,
               height: 120,
@@ -43,17 +134,14 @@ class NoRidesWidget extends StatelessWidget {
                 color: Colors.blue.shade600.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.directions_car_outlined,
                 size: 60,
                 color: Color(0xFFF79D39),
               ),
             ),
-
             const SizedBox(height: 32),
-
-            // Main heading
-            Text(
+            const Text(
               'No Rides Yet',
               style: TextStyle(
                 fontSize: 24,
@@ -61,10 +149,7 @@ class NoRidesWidget extends StatelessWidget {
                 color: Color(0xFFF79D39),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            // Description text
             Text(
               'You haven\'t taken any rides yet.\nBook your first ride to see your history here.',
               textAlign: TextAlign.center,
@@ -74,20 +159,14 @@ class NoRidesWidget extends StatelessWidget {
                 height: 1.5,
               ),
             ),
-
             const SizedBox(height: 40),
-
-            // Book Now button
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to booking page
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFF79D39),
+                  backgroundColor: const Color(0xFFF79D39),
                   foregroundColor: Colors.white,
                   elevation: 2,
                   shape: RoundedRectangleBorder(
@@ -103,63 +182,9 @@ class NoRidesWidget extends StatelessWidget {
                 ),
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Secondary action button
-            TextButton(
-              onPressed: () {
-                // Show help or FAQ
-                _showHelpDialog(context);
-              },
-              child: Text(
-                'Need Help?',
-                style: TextStyle(
-                  color: Color(0xFFF79D39),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
           ],
         ),
       ),
-    );
-  }
-
-  void _showHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Need Help?',
-            style: TextStyle(
-              color: Color(0xFFF79D39),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: const Text(
-            'Contact our support team for assistance with booking rides or any other questions you may have.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Contact Support',
-                style: TextStyle(color: Color(0xFFF79D39)),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Close',
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }

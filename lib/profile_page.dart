@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'ride_history.dart';
 import 'safety_page.dart';
 import 'settings_page.dart';
+import 'authservice.dart';
+import 'login_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -10,9 +12,32 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String userName = "username";
+  final storage = FlutterSecureStorage();
+  String userName = "name";
   String userEmail = "usermail.com";
   String userPhone = "+1 234 567 8900";
+  bool _isLoadingUserData = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+
+  }
+
+  Future<void> _loadUserData() async {
+    final name = await storage.read(key: 'userName') ?? 'Your Name';
+    final email = await storage.read(key: 'userEmail') ?? 'you@example.com';
+    final phone = await storage.read(key: 'userPhone') ?? '+1 000 000 0000';
+
+    setState(() {
+      userName = name;
+      userEmail = email;
+      userPhone = phone;
+      _isLoadingUserData = false;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +55,13 @@ class _ProfilePageState extends State<ProfilePage> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: _isLoadingUserData
+          ? Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF79D39)),
+        ),
+      )
+          : SingleChildScrollView(
         child: Column(
           children: [
             // Profile Header
@@ -192,28 +223,118 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Logout'),
-          content: Text('Are you sure you want to logout?'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.logout, color: Colors.red),
+              SizedBox(width: 10),
+              Text('Logout'),
+            ],
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(fontSize: 15),
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            TextButton(
-              onPressed: () {
-                // Implement logout logic
-                Navigator.of(context).pop();
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close dialog
+                await _handleLogout();
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
               child: Text(
                 'Logout',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _handleLogout() async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF79D39)),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Logging out...',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      // Clear auth data
+      await AuthService.logout();
+
+      // Small delay for better UX
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // Navigate to login page and remove all previous routes
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+              (route) => false,
+        );
+      }
+    } catch (e) {
+      // Handle logout error
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logout failed. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

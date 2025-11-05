@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:taxibooking/login_page.dart';
 import 'signup_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
 import 'home_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -18,6 +20,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  final storage = FlutterSecureStorage();
+
   bool _isLoading = false;
   bool _termsAccepted = false;
   bool _isGettingLocation = false;
@@ -589,6 +593,11 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     final String phoneno = _phoneController.text.trim();
     final String address = _addressController.text.trim();
 
+    await storage.write(key: 'name', value: _nameController.text);
+    await storage.write(key: 'email', value: _emailController.text);
+    await storage.write(key: 'phoneno', value: _phoneController.text);
+
+
     try {
       var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/register');
 
@@ -740,7 +749,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
         // Navigate to home page or next screen
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => LoginPage()),
               (route) => false,
         );
 

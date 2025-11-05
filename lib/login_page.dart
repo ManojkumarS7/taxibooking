@@ -175,19 +175,19 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               keyboardType: TextInputType.emailAddress,
                               style: TextStyle(fontSize: 15),
                               decoration: InputDecoration(
-                                hintText: 'Enter your email',
+                                hintText: 'Enter your mobile number',
                                 hintStyle: TextStyle(color: Colors.grey.shade400),
-                                prefixIcon: Icon(Icons.email_outlined, color: Color(0xFFF79D39)),
+                                prefixIcon: Icon(Icons.phone, color: Color(0xFFF79D39)),
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
+                                  return 'Please enter mobile number';
                                 }
-                                if (!value.contains('@')) {
-                                  return 'Please enter a valid email';
-                                }
+                                // if (!value.contains('@')) {
+                                //   return 'Please enter a valid email';
+                                // }
                                 return null;
                               },
                             ),
@@ -251,9 +251,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               keyboardType: TextInputType.number,
                               style: TextStyle(fontSize: 15, letterSpacing: 4),
                               textAlign: TextAlign.center,
-                              maxLength: 6,
+                              maxLength: 7,
                               decoration: InputDecoration(
-                                hintText: 'Enter 5-digit OTP',
+                                hintText: 'Enter 6-digit OTP',
                                 hintStyle: TextStyle(color: Colors.grey.shade400, letterSpacing: 0),
                                 prefixIcon: Icon(Icons.sms_outlined, color: Color(0xFFF79D39)),
                                 border: InputBorder.none,
@@ -264,8 +264,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter OTP';
                                 }
-                                if (value.length != 5) {
-                                  return 'OTP must be 5 digits';
+                                if (value.length != 6) {
+                                  return 'OTP must be 6 digits';
                                 }
                                 return null;
                               },
@@ -346,7 +346,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 ),
                               ),
                               child: Text(
-                                'Back to Email',
+                                'Back to Phone',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -484,12 +484,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     try {
       final String email = _emailController.text.trim();
 
-      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/otp/login');
+      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/two/factor/otp/send');
 
       var response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
+        body: jsonEncode({'phone_number': email}),
       );
 
       if (response.statusCode == 200) {
@@ -546,10 +546,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       final String email = _emailController.text.trim();
       final String otp = _otpController.text.trim();
 
-      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/otp/verify');
+      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/two/factor/otp/verify');
 
       var requestBody = {
-        'email': email,
+        'phone_number': email,
         'otp': otp,
       };
 
@@ -563,25 +563,25 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         final responseData = jsonDecode(response.body);
         print('OTP Verified Successfully: ${response.body}');
 
-        // Extract token data from nested structure
-        final tokenData = responseData['data']['token'];
+        final tokenData = responseData['data'];
+        print('Token Data: $tokenData');
 
-        // Save auth data using AuthService
         await AuthService.saveAuthData(
-          accessToken: tokenData['access_token'],
-          refreshToken: tokenData['refresh_token'],
-          tokenType: tokenData['token_type'],
-          expiresIn: tokenData['expires_in'],
-          userData: responseData['data'], // Save additional user data if needed
+          accessToken: tokenData['access_token'] ?? '',
+          refreshToken: tokenData['refresh_token'] ?? '',
+          tokenType: tokenData['token_type'] ?? 'Bearer',
+          expiresIn: tokenData['expires_in'] ?? 3600,
+          userData: tokenData,
         );
 
-        // Navigate to home page and remove all previous routes
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => HomePage()),
               (route) => false,
         );
-      } else {
+      }
+
+        else {
         print('Error: ${response.statusCode}');
         final errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
