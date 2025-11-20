@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'authservice.dart';
+import 'app_baseurl.dart';
+import 'app_basecolor.dart';
 
 class RideHistoryPage extends StatefulWidget {
   const RideHistoryPage({Key? key}) : super(key: key);
@@ -33,7 +35,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
         return;
       }
 
-      final url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/booking/history');
+      final url = Uri.parse('${AppbaseUrl.baseurl}user/booking/history');
 
       final response = await http.get(
         url,
@@ -75,13 +77,13 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: const Color(0xFFF79D39),
+        backgroundColor:  AppbaseColor.Primary,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: isLoading
           ? const Center(
-        child: CircularProgressIndicator(color: Color(0xFFF79D39)),
+        child: CircularProgressIndicator(color: AppbaseColor.Primary),
       )
           : rideHistory.isEmpty
           ? const NoRidesWidget()
@@ -94,7 +96,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
             elevation: 3,
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
-              leading: const Icon(Icons.local_taxi, color: Color(0xFFF79D39)),
+              leading: const Icon(Icons.local_taxi, color: AppbaseColor.Primary),
               title: Text(
                 "From: ${ride['pick_up_location'] ?? 'N/A'}",
                 style: const TextStyle(fontWeight: FontWeight.w600),
@@ -105,7 +107,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
               trailing: Text(
                 "₹${ride['total_fare'] ?? '300'}",
                 style: const TextStyle(
-                    color: Color(0xFFF79D39),
+                    color: AppbaseColor.Primary,
                     fontWeight: FontWeight.bold),
               ),
             ),
@@ -137,7 +139,7 @@ class NoRidesWidget extends StatelessWidget {
               child: const Icon(
                 Icons.directions_car_outlined,
                 size: 60,
-                color: Color(0xFFF79D39),
+                color: AppbaseColor.Primary,
               ),
             ),
             const SizedBox(height: 32),
@@ -146,7 +148,7 @@ class NoRidesWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFF79D39),
+                color: AppbaseColor.Primary,
               ),
             ),
             const SizedBox(height: 16),
@@ -166,7 +168,7 @@ class NoRidesWidget extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF79D39),
+                  backgroundColor: AppbaseColor.Primary,
                   foregroundColor: Colors.white,
                   elevation: 2,
                   shape: RoundedRectangleBorder(

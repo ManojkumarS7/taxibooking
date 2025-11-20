@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_basecolor.dart';
 
 class SafetyPage extends StatelessWidget {
   const SafetyPage({Key? key}) : super(key: key);
@@ -15,7 +16,7 @@ class SafetyPage extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Color(0xFFF79D39),
+        backgroundColor: AppbaseColor.Primary,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -45,7 +46,7 @@ class SafetyPage extends StatelessWidget {
                     Icon(
                       Icons.security,
                       size: 48,
-                      color: Color(0xFFF79D39),
+                      color: AppbaseColor.Primary,
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -53,7 +54,7 @@ class SafetyPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFF79D39),
+                        color: AppbaseColor.Primary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -217,7 +218,7 @@ class SafetyPage extends StatelessWidget {
                     Icon(
                       Icons.headset_mic,
                       size: 32,
-                      color: Color(0xFFF79D39),
+                      color: AppbaseColor.Primary,
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -225,7 +226,7 @@ class SafetyPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFF79D39),
+                        color: AppbaseColor.Primary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -243,7 +244,7 @@ class SafetyPage extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () => _contactSupport(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFF79D39),
+                          backgroundColor: AppbaseColor.Primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -276,7 +277,7 @@ class SafetyPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFF79D39),
+              color: AppbaseColor.Primary,
             ),
           ),
         ),
@@ -311,7 +312,7 @@ class SafetyPage extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              color: Color(0xFFF79D39),
+              color: AppbaseColor.Primary,
               size: 24,
             ),
           ),
@@ -359,7 +360,7 @@ class SafetyPage extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                color: Color(0xFFF79D39),
+                color: AppbaseColor.Primary,
                 size: 24,
               ),
             ),
@@ -456,7 +457,7 @@ class SafetyPage extends StatelessWidget {
           AlertDialog(
             title: Text(
               'Safety Guidelines',
-              style: TextStyle(color: Color(0xFFF79D39)),
+              style: TextStyle(color: AppbaseColor.Primary),
             ),
             content: const SingleChildScrollView(
               child: Column(
@@ -484,7 +485,7 @@ class SafetyPage extends StatelessWidget {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'Got it',
-                  style: TextStyle(color: Color(0xFFF79D39)),
+                  style: TextStyle(color: AppbaseColor.Primary),
                 ),
               ),
             ],

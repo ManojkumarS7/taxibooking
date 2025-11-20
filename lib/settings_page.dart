@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_basecolor.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -27,7 +28,7 @@ class _SettingsPageState extends State<SettingsPage> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Color(0xFFF79D39),
+        backgroundColor: AppbaseColor.Primary,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -56,7 +57,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundColor: Color(0xFFF79D39),
+                      backgroundColor: AppbaseColor.Primary,
                       child: const Icon(
                         Icons.person,
                         size: 36,
@@ -98,7 +99,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       onPressed: () => _editProfile(context),
                       icon: Icon(
                         Icons.edit,
-                        color: Color(0xFFF79D39),
+                        color: AppbaseColor.Primary,
                       ),
                     ),
                   ],
@@ -165,27 +166,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     _darkModeEnabled,
                         (value) => setState(() => _darkModeEnabled = value),
                   ),
-                  // _buildSwitchItem(
-                  //   Icons.volume_up_outlined,
-                  //   'Sound Effects',
-                  //   'Play sounds for app interactions',
-                  //   _soundEnabled,
-                  //       (value) => setState(() => _soundEnabled = value),
-                  // ),
-                  // _buildDropdownItem(
-                  //   Icons.language,
-                  //   'Language',
-                  //   _selectedLanguage,
-                  //   ['English', 'Spanish', 'French', 'German', 'Chinese'],
-                  //       (value) => setState(() => _selectedLanguage = value!),
-                  // ),
-                  // _buildDropdownItem(
-                  //   Icons.attach_money,
-                  //   'Currency',
-                  //   _selectedCurrency,
-                  //   ['USD', 'EUR', 'GBP', 'JPY', 'INR'],
-                  //       (value) => setState(() => _selectedCurrency = value!),
-                  // ),
+
                 ],
               ),
 
@@ -256,7 +237,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Icon(
                       Icons.info_outline,
                       size: 32,
-                      color: Color(0xFFF79D39),
+                      color: AppbaseColor.Primary,
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -264,7 +245,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFF79D39),
+                        color: AppbaseColor.Primary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -325,7 +306,7 @@ class _SettingsPageState extends State<SettingsPage> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFF79D39),
+              color: AppbaseColor.Primary,
             ),
           ),
         ),
@@ -377,7 +358,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               child: Icon(
                 icon,
-                color: Color(0xFFF79D39),
+                color: AppbaseColor.Primary,
                 size: 24,
               ),
             ),
@@ -428,7 +409,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             child: Icon(
               icon,
-              color: Color(0xFFF79D39),
+              color: AppbaseColor.Primary,
               size: 24,
             ),
           ),
@@ -458,7 +439,7 @@ class _SettingsPageState extends State<SettingsPage> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Color(0xFFF79D39),
+            activeColor:AppbaseColor.Primary,
           ),
         ],
       ),
@@ -478,7 +459,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             child: Icon(
               icon,
-              color: Color(0xFFF79D39),
+              color: AppbaseColor.Primary,
               size: 24,
             ),
           ),
@@ -496,7 +477,7 @@ class _SettingsPageState extends State<SettingsPage> {
             value: value,
             onChanged: onChanged,
             underline: const SizedBox(),
-            icon: Icon(Icons.arrow_drop_down, color: Color(0xFFF79D39)),
+            icon: Icon(Icons.arrow_drop_down, color: AppbaseColor.Primary),
             items: options.map((String option) {
               return DropdownMenuItem<String>(
                 value: option,

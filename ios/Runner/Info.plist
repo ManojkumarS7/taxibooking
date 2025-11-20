@@ -10,12 +10,10 @@
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>We need your location to show nearby places and provide location-based services.</string>
-<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-<string>We need your location to show nearby places and provide location-based services.</string>
-
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>We need your location to show nearby places and provide location-based services.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>We need your location to show nearby places and provide location-based services.</string>
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>

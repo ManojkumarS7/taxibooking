@@ -5,6 +5,7 @@ import 'settings_page.dart';
 import 'authservice.dart';
 import 'login_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'app_basecolor.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -44,7 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Color(0xFFF79D39),
+        backgroundColor: AppbaseColor.Primary,
         title: Text(
           'Profile',
           style: TextStyle(
@@ -58,7 +59,7 @@ class _ProfilePageState extends State<ProfilePage> {
       body: _isLoadingUserData
           ? Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF79D39)),
+          valueColor: AlwaysStoppedAnimation<Color>(AppbaseColor.Primary),
         ),
       )
           : SingleChildScrollView(
@@ -79,7 +80,7 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Color(0xFFF79D39),
+        color: AppbaseColor.Primary,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
@@ -93,7 +94,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Icon(
               Icons.person,
               size: 60,
-              color: Color(0xFFF79D39),
+              color: AppbaseColor.Primary,
             ),
           ),
           SizedBox(height: 15),
@@ -193,12 +194,12 @@ class _ProfilePageState extends State<ProfilePage> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: isLogout ? Colors.red[50] : Color(0xFFF79D39).withOpacity(0.1),
+            color: isLogout ? Colors.red[50] :AppbaseColor.Primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             icon,
-            color: isLogout ? Colors.red : Color(0xFFF79D39),
+            color: isLogout ? Colors.red : AppbaseColor.Primary,
           ),
         ),
         title: Text(
@@ -291,7 +292,7 @@ class _ProfilePageState extends State<ProfilePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF79D39)),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppbaseColor.Primary),
                 ),
                 SizedBox(height: 16),
                 Text(

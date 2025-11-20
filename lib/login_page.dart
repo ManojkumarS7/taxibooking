@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:taxibooking/app_basecolor.dart';
 import 'signup_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:math' as math;
 import 'home_page.dart';
 import 'authservice.dart';
+import 'app_baseurl.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -73,55 +75,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                     child: Column(
                       children: [
                         Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFFF79D39), Color(0xFFFF8C42)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0xFFF79D39).withOpacity(0.4),
-                                blurRadius: 20,
-                                offset: Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.local_taxi_sharp,
-                            size: 50,
-                            color: Colors.white,
-                          ),
+                          width: 250,
+                          height: 250,
+
+                          child: Image.asset('assets/images/logo2.png')
                         ),
-                        SizedBox(height: 20),
-                        Text(
-                          'TaxiBooking',
-                          style: TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black26,
-                                offset: Offset(0, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Your ride, anytime',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.white.withOpacity(0.9),
-                            letterSpacing: 0.3,
-                          ),
-                        ),
+
                       ],
                     ),
                   ),
@@ -177,7 +136,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               decoration: InputDecoration(
                                 hintText: 'Enter your mobile number',
                                 hintStyle: TextStyle(color: Colors.grey.shade400),
-                                prefixIcon: Icon(Icons.phone, color: Color(0xFFF79D39)),
+                                prefixIcon: Icon(Icons.phone, color: AppbaseColor.Primary),
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                               ),
@@ -255,7 +214,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               decoration: InputDecoration(
                                 hintText: 'Enter 6-digit OTP',
                                 hintStyle: TextStyle(color: Colors.grey.shade400, letterSpacing: 0),
-                                prefixIcon: Icon(Icons.sms_outlined, color: Color(0xFFF79D39)),
+                                prefixIcon: Icon(Icons.sms_outlined, color: AppbaseColor.Primary),
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                                 counterText: '',
@@ -301,10 +260,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                             onPressed: _isLoading || _verifyingOtp ? null :
                             _otpSent ? _verifyOtp : _sendOtp,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFFF79D39),
+                              backgroundColor: AppbaseColor.Primary,
                               foregroundColor: Colors.white,
                               elevation: 8,
-                              shadowColor: Color(0xFFF79D39).withOpacity(0.5),
+                              // shadowColor: AppbaseColor.Primary.withOpacity(0.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -484,7 +443,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     try {
       final String email = _emailController.text.trim();
 
-      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/two/factor/otp/send');
+      var url = Uri.parse('${AppbaseUrl.baseurl}user/two/factor/otp/send');
 
       var response = await http.post(
         url,
@@ -546,7 +505,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       final String email = _emailController.text.trim();
       final String otp = _otpController.text.trim();
 
-      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/two/factor/otp/verify');
+      var url = Uri.parse('${AppbaseUrl.baseurl}user/two/factor/otp/verify');
 
       var requestBody = {
         'phone_number': email,
@@ -613,7 +572,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     try {
       final String email = _emailController.text.trim();
 
-      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/otp/login');
+      var url = Uri.parse('${AppbaseUrl.baseurl}user/otp/login');
 
       var response = await http.post(
         url,

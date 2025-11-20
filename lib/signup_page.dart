@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
 import 'home_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'app_baseurl.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -599,7 +600,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
 
     try {
-      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/register');
+      var url = Uri.parse('${AppbaseUrl.baseurl}user/register');
 
       var response = await http.post(
         url,
@@ -727,7 +728,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
     });
 
     try {
-      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/otp/login');
+      var url = Uri.parse('${AppbaseUrl.baseurl}user/otp/login');
 
       var requestBody = {
         'email': widget.email,
@@ -788,7 +789,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
     });
 
     try {
-      var url = Uri.parse('https://cabnew.staging-rdegi.com/api/user/otp/login');
+      var url = Uri.parse('${AppbaseUrl.baseurl}user/otp/login');
 
       var response = await http.post(
         url,

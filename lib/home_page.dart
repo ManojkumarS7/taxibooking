@@ -9,7 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'home_map.dart';
 import 'profile_page.dart';
-
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:taxibooking/app_baseurl.dart';
+import 'app_basecolor.dart';
 // Animated Background Widget
 class AnimatedBackground extends StatelessWidget {
   final Animation carAnimation;
@@ -56,7 +58,7 @@ class AnimatedBackground extends StatelessWidget {
                   child: Icon(
                     Icons.local_taxi,
                     size: 40,
-                    color: Color(0xFFF79D39).withOpacity(0.3),
+                    color: AppbaseColor.Primary.withOpacity(0.2)
                   ),
                 ),
               );
@@ -74,7 +76,7 @@ class AnimatedBackground extends StatelessWidget {
                   child: Icon(
                     Icons.local_taxi,
                     size: 40,
-                    color: Color(0xFFF79D39).withOpacity(0.2),
+                    color: Color(0xFFFF9900).withOpacity(0.2),
                   ),
                 ),
               );
@@ -216,7 +218,7 @@ class _HomePageState extends State<HomePage>
   String? selectedRentalHours;
   Map<String, dynamic>? _bookingDetails;
 
-
+  late Razorpay _razorpay;
 
   final List<String> bookingTypes = [
     'Ride Now',
@@ -250,7 +252,14 @@ class _HomePageState extends State<HomePage>
     _fetchCurrentLocation();
     _searchController.addListener(_onSearchChanged);
     _searchFocusNode.addListener(_onFocusChanged);
+
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
   }
+
+
 
 
   void _setupAnimations() {
@@ -582,7 +591,7 @@ class _HomePageState extends State<HomePage>
 
       // Make API call without Accept-Encoding to avoid gzip issues
       final response = await http.post(
-        Uri.parse('https://cabnew.staging-rdegi.com/api/taxi/booking'),
+        Uri.parse('${AppbaseUrl.baseurl}taxi/booking'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -649,7 +658,7 @@ class _HomePageState extends State<HomePage>
                 SnackBar(
                   content: Text('Your cab is arriving soon...'),
                   duration: Duration(seconds: 2),
-                  backgroundColor: Color(0xFFF79D39),
+                  backgroundColor: AppbaseColor.Primary,
                 ),
               );
             }
@@ -725,6 +734,76 @@ class _HomePageState extends State<HomePage>
   }
 
 
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    // Payment successful
+    print("Payment Success: ${response.paymentId}");
+    print("Order ID: ${response.orderId}");
+    print("Signature: ${response.signature}");
+
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment Successful!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // TODO: Verify payment on your backend and update order status
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Payment failed
+    print("Payment Error: ${response.code} - ${response.message}");
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment Failed: ${response.message}'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    // External wallet selected
+    print("External Wallet: ${response.walletName}");
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('External Wallet: ${response.walletName}'),
+      ),
+    );
+  }
+
+  void openRazorpayCheckout() {
+    var options = {
+      'key': 'rzp_live_8QVaxzxdOrEnkw',
+      'amount': 10000, // Amount in paise (e.g., 10000 paise = ₹100)
+      'name': 'Your Company Name',
+      'description': 'Payment for Order',
+      'order_id': '', // Generate order_id from your backend
+      'prefill': {
+        'contact': '9876543210',
+        'email': 'customer@example.com'
+      },
+      'theme': {
+        'color': '#2E7D32'
+      }
+    };
+
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      print('Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+
   @override
   void dispose() {
     _carController.dispose();
@@ -733,7 +812,7 @@ class _HomePageState extends State<HomePage>
     _searchFocusNode.dispose();
     _debounce?.cancel();
     _passengerController.dispose();
-
+    _razorpay.clear();
     super.dispose();
   }
 
@@ -743,7 +822,7 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
 
       appBar: AppBar(
-        backgroundColor: Color(0xFFF79D39),
+        backgroundColor: AppbaseColor.Primary,
         elevation: 0,
         title: Text(
           'Taxi Booking',
@@ -757,7 +836,7 @@ class _HomePageState extends State<HomePage>
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFFF79D39), Color(0xFFFF8C42)],
+              colors: [AppbaseColor.Primary,AppbaseColor.Primary],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -784,7 +863,7 @@ class _HomePageState extends State<HomePage>
           )
         ],
         centerTitle: true,
-        shadowColor: Color(0xFFF79D39).withOpacity(0.5),
+        shadowColor: AppbaseColor.Primary.withOpacity(0.5),
         toolbarHeight: 65,
       ),
       body: Stack(
@@ -839,7 +918,7 @@ class _HomePageState extends State<HomePage>
                         children: [
                           Icon(
                             Icons.location_on,
-                            color: Color(0xFFF79D39),
+                            color: AppbaseColor.Primary,
                             size: 24,
                           ),
                           SizedBox(width: 12),
@@ -1022,7 +1101,7 @@ class _HomePageState extends State<HomePage>
                         icon: Icon(Icons.map),
                         label: Text('Select on Map'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFF79D39),
+                          backgroundColor: AppbaseColor.Primary,
                           foregroundColor: Colors.white,
                           padding: EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -1035,33 +1114,11 @@ class _HomePageState extends State<HomePage>
 
                     Container(
 
-                      width: 180,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFF79D39), Color(0xFFFF8C42)],
-                          begin: Alignment.center,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFFF79D39).withOpacity(0.4),
-                            blurRadius: 20,
-                            offset: Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.local_taxi_sharp,
-                        size: 120,
-                        color: Colors.white,
-                      ),
+                      width: 280,
+                      height: 280,
+                      child: Image.asset('assets/images/logo2.png')
                     ),
-
-                    SizedBox(height: 24),
-
-                    Text("Taxi Booking", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),),
+                    
 
                     SizedBox(height: 24),
                     // Booking Card
@@ -1094,7 +1151,7 @@ class _HomePageState extends State<HomePage>
                             SizedBox(height: 12),
                             Row(
                               children: [
-                                Icon(Icons.directions_car, color: Color(0xFFF79D39)),
+                                Icon(Icons.directions_car, color: AppbaseColor.Primary),
                                 SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
@@ -1132,7 +1189,7 @@ class _HomePageState extends State<HomePage>
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.call, color: Color(0xFFF79D39), size: 20),
+                                  Icon(Icons.call, color: AppbaseColor.Primary, size: 20),
                                   SizedBox(width: 12),
                                   Expanded(
                                     child: TextField(
@@ -1235,7 +1292,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
+                                      Icon(Icons.access_time, color: AppbaseColor.Primary, size: 20),
                                       SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
@@ -1262,7 +1319,7 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+                                    Icon(Icons.person, color: AppbaseColor.Primary, size: 20),
                                     SizedBox(width: 12),
                                     Expanded(
                                       child: TextField(
@@ -1308,7 +1365,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.calendar_today, color: Color(0xFFF79D39), size: 20),
+                                      Icon(Icons.calendar_today, color: AppbaseColor.Primary, size: 20),
                                       SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
@@ -1348,7 +1405,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
+                                      Icon(Icons.access_time, color: AppbaseColor.Primary, size: 20),
                                       SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
@@ -1404,7 +1461,7 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+                                    Icon(Icons.person, color: AppbaseColor.Primary, size: 20),
                                     SizedBox(width: 12),
                                     Expanded(
                                       child: TextField(
@@ -1492,7 +1549,7 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+                                    Icon(Icons.person, color: AppbaseColor.Primary, size: 20),
                                     SizedBox(width: 12),
                                     Expanded(
                                       child: TextField(
@@ -1538,7 +1595,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.calendar_today, color: Color(0xFFF79D39), size: 20),
+                                      Icon(Icons.calendar_today, color: AppbaseColor.Primary, size: 20),
                                       SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
@@ -1578,7 +1635,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.access_time, color: Color(0xFFF79D39), size: 20),
+                                      Icon(Icons.access_time, color: AppbaseColor.Primary, size: 20),
                                       SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
@@ -1634,7 +1691,7 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.person, color: Color(0xFFF79D39), size: 20),
+                                    Icon(Icons.person, color: AppbaseColor.Primary, size: 20),
                                     SizedBox(width: 12),
                                     Expanded(
                                       child: TextField(
@@ -1662,7 +1719,7 @@ class _HomePageState extends State<HomePage>
                               child: ElevatedButton(
                                 onPressed: _bookCab,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFFF79D39),
+                                  backgroundColor: AppbaseColor.Primary,
                                   foregroundColor: Colors.white,
                                   padding: EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
@@ -1902,12 +1959,31 @@ class _HomePageState extends State<HomePage>
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text('Track Cab feature coming soon!'),
-                                          backgroundColor: Color(0xFFF79D39),
+                                          backgroundColor: AppbaseColor.Primary,
                                         ),
                                       );
                                     },
                                     icon: Icon(Icons.my_location, size: 20),
                                     label: Text('Track Cab'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Color(0xFF2E7D32),
+                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+
+                                      openRazorpayCheckout;
+                                    },
+                                    icon: Icon(Icons.payments_outlined, size: 20),
+                                    label: Text('Pay Now'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.white,
                                       foregroundColor: Color(0xFF2E7D32),
@@ -2058,7 +2134,7 @@ class _HomePageState extends State<HomePage>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFFEBE10)),
+            border: Border.all(color: AppbaseColor.Primary),
           ),
           child: DropdownButtonFormField<String>(
             value: value,
@@ -2066,7 +2142,7 @@ class _HomePageState extends State<HomePage>
               hintText: hint,
               prefixIcon: Icon(
                 icon,
-                color: Color(0xFFFEBE10),
+                color: AppbaseColor.Primary,
               ),
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),

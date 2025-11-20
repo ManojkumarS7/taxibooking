@@ -4,6 +4,7 @@ import 'home_page.dart';
 import 'login_page.dart';
 import 'spalshscreen.dart';
 import 'authservice.dart';
+import 'app_basecolor.dart';
 
 void main() {
   runApp(const MyApp());
@@ -68,9 +69,9 @@ class _AuthCheckState extends State<AuthCheck> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1A237E),
-              Color(0xFF283593),
-              Color(0xFF3949AB),
+              Color(0xFF3c3c3c),
+              Color(0xFF1e1e1e),
+              Color(0xFF111111),
             ],
           ),
         ),
@@ -80,43 +81,14 @@ class _AuthCheckState extends State<AuthCheck> {
             children: [
               // App Logo
               Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFF79D39), Color(0xFFFF8C42)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFFF79D39).withOpacity(0.4),
-                      blurRadius: 30,
-                      offset: Offset(0, 15),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.local_taxi_sharp,
-                  size: 60,
-                  color: Colors.white,
-                ),
+                width: 350,
+                height: 350,
+
+                child: Image.asset('assets/images/logo2.png')
               ),
-              SizedBox(height: 30),
-              Text(
-                'TaxiBooking',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              SizedBox(height: 40),
               // Loading indicator
               CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF79D39)),
+                valueColor: AlwaysStoppedAnimation<Color>(AppbaseColor.Primary),
               ),
             ],
           ),
